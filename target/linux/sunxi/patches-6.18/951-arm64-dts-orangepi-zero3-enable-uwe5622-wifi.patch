@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim <mooretim4@gmail.com>
+Date: Mon, 2 Nov 2026 23:50:24 +0100
+Subject: [PATCH] arm64: dts: allwinner: orangepi-zero3: enable UWE5622 Wi-Fi
+ on mmc1
+
+Enable the SDIO-attached UWE5622 module: always-on 3.3 V and 1.8 V
+supplies, an mmc-pwrseq-simple on PG18 with the RTC 32k fanout clock, and
+mmc1 as a non-removable 4-bit 1.8 V SDIO bus. Same nodes as Armbian's
+zero2/zero3 Wi-Fi patch, scoped to the Zero3 board file.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WZsJjhtUYg72cfVriiuE5L
+---
+ .../allwinner/sun50i-h618-orangepi-zero3.dts  | 38 +++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3.dts b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3.dts
+index c51d4d912..94de3087f 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3.dts
+@@ -11,6 +11,34 @@
+ / {
+ 	model = "OrangePi Zero3";
+ 	compatible = "xunlong,orangepi-zero3", "allwinner,sun50i-h618";
++
++	reg_vcc33_wifi: vcc33-wifi {
++		/* Always-on 3.3 V supply for the UWE5622 Wi-Fi/BT module */
++		compatible = "regulator-fixed";
++		regulator-name = "vcc33-wifi";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-always-on;
++		vin-supply = <&reg_vcc5v>;
++	};
++
++	reg_vcc_wifi_io: vcc-wifi-io {
++		/* Always-on 1.8 V I/O supply for the UWE5622 module */
++		compatible = "regulator-fixed";
++		regulator-name = "vcc-wifi-io";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		regulator-always-on;
++		vin-supply = <&reg_vcc33_wifi>;
++	};
++
++	wifi_pwrseq: wifi-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		clocks = <&rtc CLK_OSC32K_FANOUT>;
++		clock-names = "osc32k-out";
++		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
++		post-power-on-delay-ms = <200>;
++	};
+ };
+ 
+ &cpu0 {
+@@ -40,6 +68,16 @@ &mmc0 {
+ 	vmmc-supply = <&reg_dldo1>;
+ };
+ 
++&mmc1 {
++	vmmc-supply = <&reg_vcc33_wifi>;
++	vqmmc-supply = <&reg_vcc_wifi_io>;
++	mmc-pwrseq = <&wifi_pwrseq>;
++	bus-width = <4>;
++	non-removable;
++	mmc-ddr-1_8v;
++	status = "okay";
++};
++
+ &r_i2c {
+ 	status = "okay";
+ 
