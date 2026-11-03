@@ -393,9 +393,11 @@ endef
 # arm64 kernel_comp_addr_r, where the SD-card boot.scr loads the same FIT.
 # No '&' or '\' in BOOTCOMMAND: scripts/config --set-str passes the value
 # through a sed replacement unescaped, so hush if/then stands in for '&&'.
-# NO_NET: U-Boot never touches the EMAC/PHY, so Linux finds the NIC in its
-# reset state after a soft reboot. The SID-derived MAC is still passed to
-# Linux (setup_environment/fdt_fixup_ethernet do not depend on NET).
+# Before booting, run one DHCP exchange so U-Boot takes the EMAC and YT8531
+# PHY through a full start (autoneg, MAC/DMA up) and stop: without it eth0
+# is missing in Linux after a warm reboot. autoload=no stops DHCP from
+# chaining into a TFTP download; bootpretryperiod caps the wait with no
+# server at 6 s (default 28 s). A failed dhcp does not stop the SPI boot.
 define U-Boot/orangepi_zero3_spi
   BUILD_SUBTARGET:=cortexa53
   NAME:=Xunlong Orange Pi Zero3 (SPI-NOR boot)
@@ -405,11 +407,8 @@ define U-Boot/orangepi_zero3_spi
   ATF:=h616
   UBOOT_CONFIG:=orangepi_zero3
   UBOOT_CUSTOMIZE_CONFIG += \
-	--enable NO_NET \
-	--disable NET \
-	--disable NET_LWIP \
 	--enable USE_BOOTCOMMAND \
-	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
+	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; setenv autoload no; setenv bootpretryperiod 6000; dhcp; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
 endef
 
 define U-Boot/Bananapi_M2_Ultra
