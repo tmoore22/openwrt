@@ -393,11 +393,12 @@ endef
 # arm64 kernel_comp_addr_r, where the SD-card boot.scr loads the same FIT.
 # No '&' or '\' in BOOTCOMMAND: scripts/config --set-str passes the value
 # through a sed replacement unescaped, so hush if/then stands in for '&&'.
-# Before booting, run one DHCP exchange so U-Boot takes the EMAC and YT8531
-# PHY through a full start (autoneg, MAC/DMA up) and stop: without it eth0
-# is missing in Linux after a warm reboot. autoload=no stops DHCP from
-# chaining into a TFTP download; bootpretryperiod caps the wait with no
-# server at 6 s (default 28 s). A failed dhcp does not stop the SPI boot.
+# "mii write 1 0 0x1140" rewrites the YT8531 (MDIO addr 1) BMCR with
+# BMCR_PDOWN clear. Linux sets PDOWN when eth0 goes down at reboot; the
+# board has no PHY reset line and the PHY supply stays on across a warm
+# reset, so without this the PHY stays powered down, outputs no RXC, and
+# the dwmac-sun8i reset times out (eth0 missing until a power cycle).
+# Needs the U-Boot network stack: it registers the EMAC's MDIO bus.
 define U-Boot/orangepi_zero3_spi
   BUILD_SUBTARGET:=cortexa53
   NAME:=Xunlong Orange Pi Zero3 (SPI-NOR boot)
@@ -408,7 +409,7 @@ define U-Boot/orangepi_zero3_spi
   UBOOT_CONFIG:=orangepi_zero3
   UBOOT_CUSTOMIZE_CONFIG += \
 	--enable USE_BOOTCOMMAND \
-	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; setenv autoload no; setenv bootpretryperiod 6000; dhcp; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
+	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; mii write 1 0 0x1140; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
 endef
 
 define U-Boot/Bananapi_M2_Ultra
