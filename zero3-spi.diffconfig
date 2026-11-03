@@ -1,0 +1,19 @@
+CONFIG_TARGET_sunxi=y
+CONFIG_TARGET_sunxi_cortexa53=y
+CONFIG_TARGET_sunxi_cortexa53_DEVICE_xunlong_orangepi-zero3-spi=y
+CONFIG_PACKAGE_hostapd-common=y
+CONFIG_PACKAGE_iw=y
+CONFIG_PACKAGE_kmod-cfg80211=y
+# CONFIG_PACKAGE_kmod-gpio-pwm is not set
+# CONFIG_PACKAGE_kmod-hwmon-core is not set
+# CONFIG_PACKAGE_kmod-hwmon-pwmfan is not set
+# CONFIG_PACKAGE_kmod-i2c-core is not set
+CONFIG_PACKAGE_kmod-uwe5622=y
+CONFIG_PACKAGE_ucode-mod-nl80211=y
+CONFIG_PACKAGE_ucode-mod-rtnl=y
+CONFIG_PACKAGE_uwe5622-firmware=y
+CONFIG_PACKAGE_wifi-scripts=y
+CONFIG_PACKAGE_wireless-regdb=y
+CONFIG_PACKAGE_wpad-basic-mbedtls=y
+CONFIG_WPA_MBO_SUPPORT=y
+CONFIG_WPA_MSG_MIN_PRIORITY=3
