@@ -388,6 +388,24 @@ define U-Boot/orangepi_zero3
   ATF:=h616
 endef
 
+# Same board config, booting the FIT at SPI 0x100000 (the "firmware"
+# partition of sun50i-h618-orangepi-zero3-spi.dts). 0x44000000 is the sunxi
+# arm64 kernel_comp_addr_r, where the SD-card boot.scr loads the same FIT.
+# No '&' or '\' in BOOTCOMMAND: scripts/config --set-str passes the value
+# through a sed replacement unescaped, so hush if/then stands in for '&&'.
+define U-Boot/orangepi_zero3_spi
+  BUILD_SUBTARGET:=cortexa53
+  NAME:=Xunlong Orange Pi Zero3 (SPI-NOR boot)
+  BUILD_DEVICES:=xunlong_orangepi-zero3-spi
+  DEPENDS:=+PACKAGE_u-boot-orangepi_zero3_spi:trusted-firmware-a-sunxi-h616
+  UENV:=h616
+  ATF:=h616
+  UBOOT_CONFIG:=orangepi_zero3
+  UBOOT_CUSTOMIZE_CONFIG += \
+	--enable USE_BOOTCOMMAND \
+	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
+endef
+
 define U-Boot/Bananapi_M2_Ultra
   BUILD_SUBTARGET:=cortexa7
   NAME:=Bananapi M2 Ultra
@@ -493,6 +511,7 @@ UBOOT_TARGETS := \
 	orangepi_zero2 \
 	orangepi_zero2w \
 	orangepi_zero3 \
+	orangepi_zero3_spi \
 	pangolin \
 	pinecube \
 	popstick \

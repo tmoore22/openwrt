@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim <mooretim4@gmail.com>
+Date: Tue, 3 Nov 2026 17:20:17 +0100
+Subject: [PATCH] arm64: dts: allwinner: add Orange Pi Zero3 SPI-NOR boot
+ variant
+
+Board file for running OpenWrt from the onboard 16 MiB SPI-NOR: the Zero3
+DTS plus a fixed partition table with u-boot (960 KiB), u-boot-env at the
+sunxi ENV_OFFSET 0xf0000 (64 KiB) and a 15 MiB FIT firmware partition that
+OpenWrt's mtdsplit splits into kernel, rootfs and rootfs_data.
+
+A separate compatible keeps the SD-card image from ever seeing a
+rootfs_data partition on SPI.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WZsJjhtUYg72cfVriiuE5L
+---
+ arch/arm64/boot/dts/allwinner/Makefile        |  1 +
+ .../sun50i-h618-orangepi-zero3-spi.dts        | 45 +++++++++++++++++++
+ 2 files changed, 46 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
+
+diff --git a/arch/arm64/boot/dts/allwinner/Makefile b/arch/arm64/boot/dts/allwinner/Makefile
+index 2edfa7bf4..79ef2eb12 100644
+--- a/arch/arm64/boot/dts/allwinner/Makefile
++++ b/arch/arm64/boot/dts/allwinner/Makefile
+@@ -49,6 +49,7 @@ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-x96-mate.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-longanpi-3h.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero2w.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero3.dtb
++dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero3-spi.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-transpeed-8k618-t.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-yuzukihd-chameleon.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg35xx-2024.dtb
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
+new file mode 100644
+index 000000000..4474a0e13
+--- /dev/null
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
+@@ -0,0 +1,45 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Orange Pi Zero3 booting OpenWrt from the onboard 16 MiB SPI-NOR.
++ *
++ * 0x000000  960 KiB  u-boot      SPL + TF-A + U-Boot (u-boot-sunxi-with-spl.bin)
++ * 0x0f0000   64 KiB  u-boot-env  U-Boot ENV_OFFSET/ENV_SIZE defaults for sunxi
++ * 0x100000   15 MiB  firmware    FIT kernel, squashfs rootfs, jffs2 rootfs_data
++ */
++
++/dts-v1/;
++
++#include "sun50i-h618-orangepi-zero3.dts"
++
++/ {
++	model = "OrangePi Zero3 (SPI-NOR boot)";
++	compatible = "xunlong,orangepi-zero3-spi", "xunlong,orangepi-zero3",
++		     "allwinner,sun50i-h618";
++};
++
++&spi0 {
++	flash@0 {
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "u-boot";
++				reg = <0x000000 0x0f0000>;
++				read-only;
++			};
++
++			partition@f0000 {
++				label = "u-boot-env";
++				reg = <0x0f0000 0x010000>;
++			};
++
++			partition@100000 {
++				compatible = "denx,fit";
++				label = "firmware";
++				reg = <0x100000 0xf00000>;
++			};
++		};
++	};
++};

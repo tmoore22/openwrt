@@ -140,6 +140,22 @@ define Device/xunlong_orangepi-zero3
 endef
 TARGET_DEVICES += xunlong_orangepi-zero3
 
+define Device/xunlong_orangepi-zero3-spi
+  DEVICE_VENDOR := Xunlong
+  DEVICE_MODEL := Orange Pi Zero 3
+  DEVICE_VARIANT := SPI-NOR boot
+  $(Device/sun50i-h618)
+  BLOCKSIZE := 64k
+  IMAGE_SIZE := 15360k
+  FILESYSTEMS := squashfs
+  IMAGES := spi-full.bin sysupgrade.bin
+  IMAGE/sysupgrade.bin := append-kernel | pad-to $$(BLOCKSIZE) | \
+	append-rootfs | pad-rootfs | check-size | append-metadata
+  IMAGE/spi-full.bin := append-kernel | pad-to $$(BLOCKSIZE) | \
+	append-rootfs | pad-rootfs | check-size | sunxi-spi-prepend-uboot
+endef
+TARGET_DEVICES += xunlong_orangepi-zero3-spi
+
 define Device/xunlong_orangepi-zero-plus
   DEVICE_VENDOR := Xunlong
   DEVICE_MODEL := Orange Pi Zero Plus

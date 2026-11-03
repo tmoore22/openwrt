@@ -26,6 +26,17 @@ define Build/sunxi-sdcard
 	rm -f $@.boot
 endef
 
+# Full SPI-NOR image: u-boot-sunxi-with-spl.bin padded to 1 MiB (u-boot +
+# u-boot-env partitions), followed by the firmware image already in $@.
+define Build/sunxi-spi-prepend-uboot
+	[ -f $@ ] || exit 0; \
+	uboot="$(STAGING_DIR_IMAGE)/$(DEVICE_NAME)-u-boot-with-spl.bin"; \
+	[ "$$(stat -c%s "$$uboot")" -le $$((0xf0000)) ] || \
+		{ echo "$$uboot is larger than the 0xf0000 u-boot partition" >&2; exit 1; }; \
+	dd if="$$uboot" of=$@.new bs=1M conv=sync 2>/dev/null && \
+	cat $@ >> $@.new && mv $@.new $@
+endef
+
 # why \x00\x00\x00\x00 for zImage-initramfs
 define Device/Default
   PROFILES := Default
