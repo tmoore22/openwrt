@@ -1,0 +1,104 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim <mooretim4@gmail.com>
+Date: Tue, 3 Nov 2026 18:52:19 +0100
+Subject: [PATCH 3/3] arm64: dts: allwinner: orangepi-zero3-spi: add PWM fan on
+ header pin 8
+
+Drive a 5 V 2-wire fan through a low-side logic-level N-MOSFET whose gate
+is on PH2 (header pin 8). 6.18 has no H616 PWM driver, so use pwm-gpio at
+100 Hz; PH2 is also the SoC's PWM2 pin, so a hardware PWM node can later
+replace it without rewiring.
+
+pwm-fan levels off/40/60/80/100 % are mapped to active trips on
+cpu-thermal at 45/52/58/64 C (3 C hysteresis), with a full-duty kick-start
+when starting from stopped. Mainline H616 has no other cooling maps on
+cpu-thermal, so this fan is the only active cooling below the 110 C
+critical trip.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WZsJjhtUYg72cfVriiuE5L
+---
+ .../sun50i-h618-orangepi-zero3-spi.dts        | 70 +++++++++++++++++++
+ 1 file changed, 70 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
+index 4474a0e13..5f4403963 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero3-spi.dts
+@@ -15,6 +15,76 @@ / {
+ 	model = "OrangePi Zero3 (SPI-NOR boot)";
+ 	compatible = "xunlong,orangepi-zero3-spi", "xunlong,orangepi-zero3",
+ 		     "allwinner,sun50i-h618";
++
++	/*
++	 * 5 V 2-wire fan switched low-side by a logic-level N-MOSFET whose gate
++	 * is driven from header pin 8 (PH2). Software PWM at 100 Hz: 6.18 has
++	 * no H616 PWM driver; PH2 is also the PWM2 pin, so a future hardware
++	 * PWM node can replace fan_pwm without rewiring.
++	 */
++	fan_pwm: pwm-0 {
++		compatible = "pwm-gpio";
++		gpios = <&pio 7 2 GPIO_ACTIVE_HIGH>; /* PH2, header pin 8 */
++		#pwm-cells = <3>;
++	};
++
++	fan: pwm-fan {
++		compatible = "pwm-fan";
++		pwms = <&fan_pwm 0 10000000 0>; /* 100 Hz */
++		cooling-levels = <0 102 153 204 255>; /* off, 40, 60, 80, 100 % */
++		fan-stop-to-start-percent = <100>; /* kick-start from stopped */
++		#cooling-cells = <2>;
++	};
++};
++
++&{/thermal-zones/cpu-thermal} {
++	trips {
++		cpu_fan_0: cpu-fan-0 {
++			temperature = <45000>;
++			hysteresis = <3000>;
++			type = "active";
++		};
++
++		cpu_fan_1: cpu-fan-1 {
++			temperature = <52000>;
++			hysteresis = <3000>;
++			type = "active";
++		};
++
++		cpu_fan_2: cpu-fan-2 {
++			temperature = <58000>;
++			hysteresis = <3000>;
++			type = "active";
++		};
++
++		cpu_fan_3: cpu-fan-3 {
++			temperature = <64000>;
++			hysteresis = <3000>;
++			type = "active";
++		};
++	};
++
++	cooling-maps {
++		map-fan-0 {
++			trip = <&cpu_fan_0>;
++			cooling-device = <&fan 1 1>;
++		};
++
++		map-fan-1 {
++			trip = <&cpu_fan_1>;
++			cooling-device = <&fan 2 2>;
++		};
++
++		map-fan-2 {
++			trip = <&cpu_fan_2>;
++			cooling-device = <&fan 3 3>;
++		};
++
++		map-fan-3 {
++			trip = <&cpu_fan_3>;
++			cooling-device = <&fan 4 4>;
++		};
++	};
+ };
+ 
+ &spi0 {

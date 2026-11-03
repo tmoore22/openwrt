@@ -393,6 +393,9 @@ endef
 # arm64 kernel_comp_addr_r, where the SD-card boot.scr loads the same FIT.
 # No '&' or '\' in BOOTCOMMAND: scripts/config --set-str passes the value
 # through a sed replacement unescaped, so hush if/then stands in for '&&'.
+# NO_NET: U-Boot never touches the EMAC/PHY, so Linux finds the NIC in its
+# reset state after a soft reboot. The SID-derived MAC is still passed to
+# Linux (setup_environment/fdt_fixup_ethernet do not depend on NET).
 define U-Boot/orangepi_zero3_spi
   BUILD_SUBTARGET:=cortexa53
   NAME:=Xunlong Orange Pi Zero3 (SPI-NOR boot)
@@ -402,6 +405,9 @@ define U-Boot/orangepi_zero3_spi
   ATF:=h616
   UBOOT_CONFIG:=orangepi_zero3
   UBOOT_CUSTOMIZE_CONFIG += \
+	--enable NO_NET \
+	--disable NET \
+	--disable NET_LWIP \
 	--enable USE_BOOTCOMMAND \
 	--set-str BOOTCOMMAND 'setenv bootargs console=ttyS0,115200 earlycon; if sf probe 0; then if sf read 0x44000000 0x100000 0x800000; then bootm 0x44000000; fi; fi'
 endef

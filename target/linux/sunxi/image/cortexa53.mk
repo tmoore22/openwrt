@@ -148,6 +148,7 @@ define Device/xunlong_orangepi-zero3-spi
   BLOCKSIZE := 64k
   IMAGE_SIZE := 15360k
   FILESYSTEMS := squashfs
+  DEVICE_PACKAGES += kmod-gpio-pwm kmod-hwmon-pwmfan
   IMAGES := spi-full.bin sysupgrade.bin
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(BLOCKSIZE) | \
 	append-rootfs | pad-rootfs | check-size | append-metadata
