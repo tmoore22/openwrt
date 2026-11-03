@@ -13,7 +13,7 @@ PKG_SOURCE_URL:=https://github.com/armbian/uwe5622.git
 PKG_SOURCE_DATE:=2026-10-13
 PKG_SOURCE_VERSION:=fa9d1a6703a93a85bcf68e865ebc2726474076ad
 # Pin after the first download: make package/uwe5622/check FIXUP=1
-PKG_MIRROR_HASH:=skip
+PKG_MIRROR_HASH:=e65b3b788b15aef395d13bd1076b76ce476855b2b26fa28fef470943df8ab73d
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_BUILD_PARALLEL:=1
